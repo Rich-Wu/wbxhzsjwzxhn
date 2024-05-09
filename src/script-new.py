@@ -13,8 +13,18 @@ from pypinyin import lazy_pinyin, Style as PYStyle
 
 JS_FILE = "handlers.js"
 
-analyzer = ChineseAnalyzer()
-dictionary = []
+class Tokenizer:
+    def __init__(self, traditional = True):
+        self._analyzer = ChineseAnalyzer()
+        self.traditional = traditional
+        self.dictionary = []
+        self.tokens = {}
+    def append(self, item):
+        self.dictionary.append(item)
+    def result(self):
+        return self._analyzer.parse(self.dictionary)
+
+tokenizer = Tokenizer([])
 
 def build_content(lines):
     content = Table()
@@ -75,7 +85,7 @@ def main():
             potential_str = str(tag.string)
             if type(tag) == bs4.element.NavigableString and potential_str != None and potential_str != "\n" and potential_str != " ":
                 cleaned.append(potential_str)
-                dictionary.append(potential_str)
+                tokenizer.append(potential_str)
 
         body = Body([StyleAttr("font-size: 1.6rem;")])
         body.inner_html.append(links_to_other_pages)
