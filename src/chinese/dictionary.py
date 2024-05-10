@@ -133,9 +133,8 @@ class Dictionary:
             return []
         if string in dictionary:
             return dictionary[string]
-        while string not in dictionary and len(string) > 1:
-            return self.__lookup(dictionary, string[:len(string) - 1])
-        return [Traditional(string, None, None)] if dictionary['name'] == 'traditional' else [Simplified(string, None, None)]
+        # LookupResult(match, pinyin, definition) is the expected return
+        return []
     
     def lookup_pinyin_with_simplified_chinese(self, string):
         self.__init_dict_if_necessary()

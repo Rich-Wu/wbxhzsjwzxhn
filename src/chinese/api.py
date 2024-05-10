@@ -7,7 +7,7 @@ import re
 import subprocess
 
 from chinese.converter import Converter
-from chinese.dictionary import Dictionary
+from chinese.dictionary import Dictionary, LookupResult
 from chinese.tokenizer import Tokenizer
 import chinese.errors as errors
 
@@ -30,16 +30,30 @@ class ChineseAnalyzer:
             using: An Engine object or a custom tokenizer derived from TokenizerInterface.
             dictionary (str): A path to your dictionary file.
         """
-        tokens = [list(token) for token in self.tokenizer.tokenize(string, traditional=traditional, using=using)]
+        tokens = [token for token in self.tokenizer.tokenize(string, traditional=traditional, using=using)]
         if dictionary is not None:
             self.dictionary.load(dictionary)
         if traditional:
             lookup = self.dictionary.lookup_with_traditional_chinese
         else:
             lookup = self.dictionary.lookup_with_simplified_chinese
-        parsed_tokens = map(lookup, (token[0] for token in tokens))
-        parsed_string = list(zip(tokens, parsed_tokens))
-        return ChineseAnalyzerResult(self, tokens, parsed_string, traditional)
+        found_results = []
+        for token in tokens:
+            upper_bound = token[2]
+            start = token[1]
+            while start < upper_bound:
+                start, end = start, token[2]
+                token_word = string[start:end]
+                result = lookup(token_word)
+                while end - start > 1 and len(result) < 1:
+                    end -= 1
+                    token_word = token[start:end]
+                    result = lookup(token_word)
+                found_results.append([token_word, result])
+                start = end + 1
+        print(found_results)
+
+        return ChineseAnalyzerResult(self, tokens, found_results, traditional)
 
 class ChineseAnalyzerResult:
     

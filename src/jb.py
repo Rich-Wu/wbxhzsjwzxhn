@@ -15,5 +15,5 @@ class ChineseInfo:
 chinese_info = ChineseInfo(traditional=True)
 parsed = chinese_info.lookup(test)
 print(parsed)
-print(parsed.tokens(details=True))
+# print(parsed.tokens(details=True))
 # print(parsed.pinyin(force=True))
