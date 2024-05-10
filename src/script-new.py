@@ -12,19 +12,19 @@ from htmlBuilder.tags import *
 from pypinyin import lazy_pinyin, Style as PYStyle
 
 JS_FILE = "handlers.js"
+DICTIONARY_FILE = "cedict_ts.u8"
+test = '領證的前一晚我問他：「你是什麼時候開始喜歡我的？」'
 
-class Tokenizer:
-    def __init__(self, traditional = True):
-        self._analyzer = ChineseAnalyzer()
+class ChineseInfo:
+    def __init__(self, traditional = True, dict_path = None):
         self.traditional = traditional
-        self.dictionary = []
-        self.tokens = {}
-    def append(self, item):
-        self.dictionary.append(item)
-    def result(self):
-        return self._analyzer.parse(self.dictionary)
+        self._engine = ChineseAnalyzer(dictionary_path="/".join([os.getcwd(), "data", DICTIONARY_FILE]))
+    def lookup(self, string):
+        return self._engine.parse(string, traditional = self.traditional)
 
-tokenizer = Tokenizer([])
+# TODO: Find way to discern simplified and traditional dynamically
+chinese_info = ChineseInfo(traditional=False)
+print(chinese_info.lookup(test))
 
 def build_content(lines):
     content = Table()
@@ -85,7 +85,6 @@ def main():
             potential_str = str(tag.string)
             if type(tag) == bs4.element.NavigableString and potential_str != None and potential_str != "\n" and potential_str != " ":
                 cleaned.append(potential_str)
-                tokenizer.append(potential_str)
 
         body = Body([StyleAttr("font-size: 1.6rem;")])
         body.inner_html.append(links_to_other_pages)
