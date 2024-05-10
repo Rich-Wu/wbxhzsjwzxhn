@@ -14,6 +14,6 @@ class ChineseInfo:
 # TODO: Find way to discern simplified and traditional dynamically
 chinese_info = ChineseInfo(traditional=True)
 parsed = chinese_info.lookup(test)
-print(parsed)
-# print(parsed.tokens(details=True))
+# print(parsed)
+print(parsed.tokens(details=True))
 # print(parsed.pinyin(force=True))

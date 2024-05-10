@@ -38,6 +38,7 @@ class ChineseAnalyzer:
         else:
             lookup = self.dictionary.lookup_with_simplified_chinese
         found_results = []
+        new_tokens = []
         for token in tokens:
             upper_bound = token[2]
             start = token[1]
@@ -47,13 +48,13 @@ class ChineseAnalyzer:
                 result = lookup(token_word)
                 while end - start > 1 and len(result) < 1:
                     end -= 1
-                    token_word = token[start:end]
+                    token_word = string[start:end]
                     result = lookup(token_word)
-                found_results.append([token_word, result])
-                start = end + 1
-        print(found_results)
+                found_results.append(((token_word, start, end), result))
+                new_tokens.append((token_word, start, end))
+                start = end
 
-        return ChineseAnalyzerResult(self, tokens, found_results, traditional)
+        return ChineseAnalyzerResult(self, tuple(new_tokens), found_results, traditional)
 
 class ChineseAnalyzerResult:
     
@@ -79,7 +80,7 @@ class ChineseAnalyzerResult:
             A list of tokens are returned by default. If details is set to True,
             a list of lists containing tokens and their details are returned.
         """
-        result = [list(token) for token in self.__tokens] if details else [token[0] for token in self.__tokens]
+        result = tuple([token for token in self.__tokens]) if details else tuple([token[0] for token in self.__tokens])
         if unique:
             from collections import OrderedDict
             result = list(OrderedDict.fromkeys(result))
