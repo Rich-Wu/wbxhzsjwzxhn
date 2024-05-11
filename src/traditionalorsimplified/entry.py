@@ -19,7 +19,18 @@ with open(TRADITIONAL_DATA_FILE, encoding='utf-8') as data:
 with open(SIMPLIFIED_DATA_FILE, encoding='utf-8') as data:
     SIMPLIFIED_DATA = {char for char in data.read()}
 
-def is_traditional(s: str, thorough = False) -> bool:
+def is_traditional(s: str, thorough: bool = False) -> bool:
+    """Makes a determination of whether a string is written in traditional (Chinese).
+
+    Args:
+        s (str): The string to test for traditional (Chinese) characters.
+        thorough (bool, optional): Setting to see if the function should scan the
+            whole string for majority-voting to make a determination. Defaults to False.
+    
+    Returns:
+        bool: True if 's' was determined to be written in traditional (Chinese). Returns False
+            if the result was indeterminate
+    """
     counter = 0
     for char in s:
         if char in TRADITIONAL_DATA:
@@ -30,7 +41,18 @@ def is_traditional(s: str, thorough = False) -> bool:
             counter -= 1
     return True if counter > 0 else False
 
-def is_simplified(s: str, thorough = False) -> bool:
+def is_simplified(s: str, thorough: bool = False) -> bool:
+    """Makes a determination of whether a string is written in simplified (Chinese).
+
+    Args:
+        s (str): The string to test for simplified (Chinese) characters.
+        thorough (bool, optional): Setting to see if the function should scan the
+            whole string for majority-voting to make a determination. Defaults to False.
+    
+    Returns:
+        bool: True if 's' was determined to be written in simplified (Chinese). Returns False
+            if the result was indeterminate.
+    """
     counter = 0
     for char in s:
         if char in SIMPLIFIED_DATA:

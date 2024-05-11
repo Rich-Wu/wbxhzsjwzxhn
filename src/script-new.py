@@ -12,10 +12,10 @@ from htmlBuilder.tags import *
 from pypinyin import lazy_pinyin, Style as PYStyle
 
 from classes import ChineseInfo
+from traditionalorsimplified import is_traditional
 
 JS_FILE = "handlers.js"
 
-# TODO: Find way to discern simplified and traditional dynamically
 chinese_info = ChineseInfo(traditional=False)
 
 def build_content(lines):
@@ -61,6 +61,15 @@ def main():
     last_page_link = book_links[len(book_links) - 1].get("href")
     page_num_regex = re.compile(r"-(\d+)\.")
     last_page_number = int(page_num_regex.findall(last_page_link)[0])
+    # Determines whether a piece is in traditional and sets ChineseInfo to it
+    text = soup.select("#BookContent")[0]
+    if not text:
+        raise Exception("Could not get data from page.")
+    for tag in text:
+        potential_str = str(tag.string)
+        if type(tag) == bs4.element.NavigableString and potential_str != None and potential_str != "\n" and potential_str != " ":
+            chinese_info.traditional = is_traditional(potential_str)
+            break
 
     links_to_other_pages = Div()
     for i in range(1, last_page_number + 1):
