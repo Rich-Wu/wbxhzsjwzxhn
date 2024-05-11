@@ -7,24 +7,16 @@ import bs4.element
 import requests
 from bs4 import BeautifulSoup
 from chinese import ChineseAnalyzer
-from htmlBuilder.attributes import Id, Class as ClassNames, Href, Style as StyleAttr, Onclick
+from htmlBuilder.attributes import Id, Class as ClassNames, Href, Style as StyleAttr, Onclick, Colspan
 from htmlBuilder.tags import *
 from pypinyin import lazy_pinyin, Style as PYStyle
 
-JS_FILE = "handlers.js"
-DICTIONARY_FILE = "cedict_ts.u8"
-test = '領證的前一晚我問他：「你是什麼時候開始喜歡我的？」'
+from classes import ChineseInfo
 
-class ChineseInfo:
-    def __init__(self, traditional = True, dict_path = None):
-        self.traditional = traditional
-        self._engine = ChineseAnalyzer(dictionary_path="/".join([os.getcwd(), "data", DICTIONARY_FILE]))
-    def lookup(self, string):
-        return self._engine.parse(string, traditional = self.traditional)
+JS_FILE = "handlers.js"
 
 # TODO: Find way to discern simplified and traditional dynamically
 chinese_info = ChineseInfo(traditional=False)
-print(chinese_info.lookup(test))
 
 def build_content(lines):
     content = Table()
@@ -34,13 +26,18 @@ def build_content(lines):
 
 def build_line(s: list[str]) -> list[HtmlTag]:
     container = Tr([ClassNames("line"), StyleAttr("")])
-    for el in s:
-        word_box = Td([ClassNames("word"), StyleAttr("display: inline-block;"), Onclick("togglePinyin(event)")])
+    chinese_result = chinese_info.lookup(s)
+    for i, el in enumerate(chinese_result.tokens(details=True)):
+        token, start, end = el[0], el[1], el[2]
+        # TODO: Pick appropriate definition from definition list
+        definition = chinese_result[token][0].definitions[0]
+        word_box = Td([ClassNames("word"), StyleAttr("display: inline-block"), Onclick("togglePinyin(event)")])
         word_table = Table([ClassNames("word-container")])
         word_box.inner_html.append(word_table)
         container.inner_html.append(word_box)
-        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center; visibility: hidden;"), ClassNames("pinyin")], lazy_pinyin(el, style=PYStyle.TONE, errors=lambda x: [c for c in x]))))
-        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center;"), ClassNames("char")], el)))
+        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center; visibility: hidden"), ClassNames("pinyin")], lazy_pinyin(token, style=PYStyle.TONE, errors=lambda x: [c for c in x]))))
+        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center"), ClassNames("char")], token)))
+        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center; visibility: hidden"), ClassNames("def")], definition)))
     return container
 
 def main():
@@ -86,7 +83,7 @@ def main():
             if type(tag) == bs4.element.NavigableString and potential_str != None and potential_str != "\n" and potential_str != " ":
                 cleaned.append(potential_str)
 
-        body = Body([StyleAttr("font-size: 1.6rem;")])
+        body = Body([StyleAttr("font-size: 1.6rem")])
         body.inner_html.append(links_to_other_pages)
         for element in iter(build_content(cleaned)):
                 body.inner_html.append(element)
@@ -99,6 +96,16 @@ def main():
                     Head([],
                         Title([],
                             Text(f"{title} - Page {i}"))),
+                        Style([], '''
+td {
+    min-height: 1rem;
+    white-space: nowrap;
+    border: 1px solid gray;
+}
+table {
+    empty-cells: show;
+}
+                            '''),
                     body)
         
         filename = f"{args.book_id}-{i:02}.html"

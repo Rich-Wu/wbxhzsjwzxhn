@@ -1,1 +1,6 @@
 out/*.html
+__pycache__/
+*.pyc
+*.pyo
+*/__pycache__
+.DS_Store

@@ -7,7 +7,7 @@ import re
 import subprocess
 
 from chinese.converter import Converter
-from chinese.dictionary import Dictionary, LookupResult
+from chinese.dictionary import Dictionary, LookupResult, Simplified, Traditional
 from chinese.tokenizer import Tokenizer
 import chinese.errors as errors
 
@@ -50,7 +50,12 @@ class ChineseAnalyzer:
                     end -= 1
                     token_word = string[start:end]
                     result = lookup(token_word)
-                found_results.append(((token_word, start, end), result))
+                if traditional and not result:
+                    found_results.append(((token_word, start, end), [Traditional(token_word, [""], [""])]))
+                elif not result:
+                    found_results.append(((token_word, start, end), [Simplified(token_word, [""], [""])]))
+                else:
+                    found_results.append(((token_word, start, end), result))
                 new_tokens.append((token_word, start, end))
                 start = end
 
@@ -103,20 +108,24 @@ class ChineseAnalyzerResult:
 
     def sentences(self):
         """Returns a list of sentences in a provided text."""
-        result = []
-        delimiters = re.compile('[。？！；]')
-        paragraphs = self.paragraphs()
+        # Original code doesn't seem to work as expected
+        # result = []
+        # delimiters = re.compile('[。？！；]')
+        # paragraphs = self.paragraphs()
         
-        for paragraph in paragraphs:
-            result += [sentence for sentence in delimiters.split(paragraph) if sentence]
+        # for paragraph in paragraphs:
+        #     result += [sentence for sentence in delimiters.split(paragraph) if sentence]
         
-        return result
+        # return result
+        pass
     
     def search(self, string):
         """Returns a list of sentences containing the argument string."""
-        return [sentence for sentence in self.sentences() if string in sentence]
+        # sentences() doesn't seem to work as expected
+        # return [sentence for sentence in self.sentences() if string in sentence]
+        pass
 
-    def pinyin(self, *, force=False, all_readings=False):
+    def pinyin(self, *, force=True, all_readings=False):
         """Returns a pinyin representation of the provided text.
 
         Args:
@@ -129,12 +138,12 @@ class ChineseAnalyzerResult:
         Returns:
             A string of pinyins which derived from the provided text.
         """
-        pinyin_list = self.__pinyin_list(force)
+        pinyin_list = self.pinyin_list(force)
         joined = self.__join(pinyin_list, all_readings)
         cleaned = self.__clean(joined)
         return cleaned
 
-    def __pinyin_list(self, force):
+    def pinyin_list(self, force = True):
         """Returns a list of lists of pinyins derived from the provided text.
         
         Returns:
@@ -151,11 +160,11 @@ class ChineseAnalyzerResult:
         for parsed in self.__parsed_string:
             lookup_results = parsed[1]
             pinyins = []
-            
+            if not lookup_results:
+                pinyins.append('')
             for result in lookup_results:
                 if result is None:
                     continue
-
                 if result.pinyin is not None:
                     pinyins.append(''.join(converter(ugly_pinyin) for ugly_pinyin in result.pinyin))
                 else:
@@ -181,7 +190,10 @@ class ChineseAnalyzerResult:
                 pinyin = '[{}]'.format('|'.join(pinyins)) if len(pinyins) > 1 else pinyins[0]
                 result.append(' ' + pinyin)
             else:
-                result.append(' ' + pinyins[0]) # Use the first one: MUST BE FIXED
+                if len(pinyins) == 0:
+                    result.append("")
+                else:
+                    result.append(' ' + pinyins[0]) # Use the first one: MUST BE FIXED
         return ''.join(result).strip()
     
     def __clean(self, string):
@@ -251,6 +263,7 @@ class ChineseAnalyzerResult:
     def __getitem__(self, key):
         """Returns a list of lookup results."""
         if key not in self.tokens():
+            print("The key:", key)
             raise errors.InvalidKeyError('InvalidKeyError: {}'.format(key))
         for token, dict_data in self.__parsed_string:
             if key == token[0]:
