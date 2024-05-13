@@ -15,3 +15,6 @@ pynlpir = "*"
 
 [requires]
 python_version = "3.12"
+
+[scripts]
+clean = "python3 ./scripts/clean.py"
