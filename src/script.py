@@ -146,7 +146,7 @@ div.def {
                     body)
         
         filename = f"{args.book_id}-{i:02}.html"
-        with open("/".join([".", OUTPUT_FOLDER, filename]), mode="w") as out:
+        with open("/".join([".", OUTPUT_FOLDER, filename]), mode="x") as out:
             out.write(html.render(doctype=True, pretty=True))
             
 if __name__ == "__main__":
