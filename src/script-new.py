@@ -6,10 +6,11 @@ import re
 import bs4.element
 import requests
 from bs4 import BeautifulSoup
-from htmlBuilder.attributes import Id, Class as ClassNames, Href, Style as StyleAttr, Onclick, Colspan
+from htmlBuilder.attributes import Class as ClassNames, Href, Style as StyleAttr
 from htmlBuilder.tags import *
 from pypinyin import lazy_pinyin, Style as PYStyle
 
+from chinese.dictionary import LookupResult
 from classes import ChineseInfo
 from traditionalorsimplified import is_traditional
 
@@ -25,16 +26,26 @@ def build_content(lines):
 def build_line(s: list[str]) -> list[HtmlTag]:
     container = Div([ClassNames("line")])
     chinese_result = chinese_info.lookup(s)
-    for i, el in enumerate(chinese_result.tokens(details=True)):
+    for el in chinese_result.tokens(details=True):
         token = el[0]
-        # TODO: Pick appropriate definition from definition list
-        definition = chinese_result[token][0].definitions[0]
-        word_box = Div([ClassNames("word")])
-        word_box.inner_html.append(Div([ClassNames("py hidden")], lazy_pinyin(token, style=PYStyle.TONE, errors=lambda x: [c for c in x])))
-        word_box.inner_html.append(Div([ClassNames("char")], token))
-        word_box.inner_html.append(Div([ClassNames("def hidden")], definition))
-        container.inner_html.append(word_box)
+        container.inner_html.append(build_word(chinese_result, token))
     return container
+
+def build_word(info, token: str) -> HtmlTag:
+    word_box = Span([ClassNames("word")])
+    detail_box = Div([ClassNames("details hidden")])
+    detail_box.inner_html.append(Div([ClassNames("char")], token))
+    detail_box.inner_html.append(Div([ClassNames("py")], lazy_pinyin(token, style=PYStyle.TONE, errors=lambda x: [c for c in x])))
+    detail_box.inner_html.append(Div([ClassNames("def")], build_definition_section(info[token][0].definitions)))
+    word_box.inner_html.append(Span([ClassNames("text")], token))
+    word_box.inner_html.append(detail_box)
+    return word_box
+
+def build_definition_section(definitions: list[LookupResult]) -> HtmlTag:
+    def_list = Ul()
+    for definition in definitions:
+        def_list.inner_html.append(Li([], definition))
+    return def_list
 
 def main():
     parser = argparse.ArgumentParser(description="This program takes a book id appropriate to sto.cx, and outputs an html page with chinese pinyin for the contents of the book.")
@@ -102,21 +113,31 @@ def main():
                         Title([],
                             Text(f"{title} - Page {i}"))),
                         Style([], '''
-div.line {
-    border: 1px solid yellow;
+ul {
+    padding: 0 0 0 20px;
+    margin: 3px 0;
+    list-style-type: decimal;
+}
+.line {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
 }
-div.word {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    min-width: 2rem;
-    align-content: center;
-}
 div.def {
-    max-width: 3rem;
+    max-width: 8rem;
+    max-height: 8rem;
+    overflow: hidden;
+}
+.details {
+    font-size: 1rem;
+    border: 1px solid gray;
+    border-radius: 5px;
+    position: absolute;
+    pointer-events: none;
+    padding: 5px 12px;
+    max-width: 40%;
+    background-color: white;
+    box-shadow: 3px 3px gray;
 }
 .hidden {
     visibility: hidden;

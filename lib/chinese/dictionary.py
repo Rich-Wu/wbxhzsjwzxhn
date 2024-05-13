@@ -128,7 +128,7 @@ class Dictionary:
         self.__init_dict_if_necessary()
         return self.__lookup(self.traditional, string)
     
-    def __lookup(self, dictionary, string):
+    def __lookup(self, dictionary, string) -> list[LookupResult]:
         if len(string) == 0:
             return []
         if string in dictionary:
