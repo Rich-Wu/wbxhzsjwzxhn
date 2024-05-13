@@ -1,7 +1,19 @@
-function togglePinyin(event) {
-    const py = event.currentTarget.querySelector(".pinyin");
-    py.style.visibility = py.style.visibility == "hidden" ? "visible" : "hidden";
-    const def = event.currentTarget.querySelector(".def");
-    def.style.visibility = def.style.visibility == "hidden" ? "visible" : "hidden";
-    event.stopPropagation()
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints;
+
+function toggleDetails(event) {
+    const word = event.currentTarget;
+    const py = word.querySelector(".py");
+    const def = word.querySelector(".def");
+    py.classList.toggle("hidden");
+    def.classList.toggle("hidden");
 }
+
+document.querySelectorAll(".word").forEach(word => {
+    if (!isMobile) {
+        word.addEventListener("mouseenter", toggleDetails);
+        word.addEventListener("mouseleave", toggleDetails);
+    } else {
+        word.addEventListener("touchstart", toggleDetails);
+        word.addEventListener("touchend", toggleDetails);
+    }
+})

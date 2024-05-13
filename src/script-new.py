@@ -6,7 +6,6 @@ import re
 import bs4.element
 import requests
 from bs4 import BeautifulSoup
-from chinese import ChineseAnalyzer
 from htmlBuilder.attributes import Id, Class as ClassNames, Href, Style as StyleAttr, Onclick, Colspan
 from htmlBuilder.tags import *
 from pypinyin import lazy_pinyin, Style as PYStyle
@@ -17,27 +16,24 @@ from traditionalorsimplified import is_traditional
 JS_FILE = "handlers.js"
 
 chinese_info = ChineseInfo(traditional=False)
-
 def build_content(lines):
-    content = Table()
+    content = Div()
     for line in lines:
         content.inner_html.append(build_line(line))
     return [content]
 
 def build_line(s: list[str]) -> list[HtmlTag]:
-    container = Tr([ClassNames("line"), StyleAttr("")])
+    container = Div([ClassNames("line")])
     chinese_result = chinese_info.lookup(s)
     for i, el in enumerate(chinese_result.tokens(details=True)):
-        token, start, end = el[0], el[1], el[2]
+        token = el[0]
         # TODO: Pick appropriate definition from definition list
         definition = chinese_result[token][0].definitions[0]
-        word_box = Td([ClassNames("word"), StyleAttr("display: inline-block"), Onclick("togglePinyin(event)")])
-        word_table = Table([ClassNames("word-container")])
-        word_box.inner_html.append(word_table)
+        word_box = Div([ClassNames("word")])
+        word_box.inner_html.append(Div([ClassNames("py hidden")], lazy_pinyin(token, style=PYStyle.TONE, errors=lambda x: [c for c in x])))
+        word_box.inner_html.append(Div([ClassNames("char")], token))
+        word_box.inner_html.append(Div([ClassNames("def hidden")], definition))
         container.inner_html.append(word_box)
-        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center; visibility: hidden"), ClassNames("pinyin")], lazy_pinyin(token, style=PYStyle.TONE, errors=lambda x: [c for c in x]))))
-        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center"), ClassNames("char")], token)))
-        word_table.inner_html.append(Tr([],Td([StyleAttr("text-align: center; visibility: hidden"), ClassNames("def")], definition)))
     return container
 
 def main():
@@ -106,13 +102,24 @@ def main():
                         Title([],
                             Text(f"{title} - Page {i}"))),
                         Style([], '''
-td {
-    min-height: 1rem;
-    white-space: nowrap;
-    border: 1px solid gray;
+div.line {
+    border: 1px solid yellow;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
 }
-table {
-    empty-cells: show;
+div.word {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    min-width: 2rem;
+    align-content: center;
+}
+div.def {
+    max-width: 3rem;
+}
+.hidden {
+    visibility: hidden;
 }
                             '''),
                     body)
@@ -120,8 +127,6 @@ table {
         filename = f"{args.book_id}-{i:02}.html"
         with open("/".join([".", OUTPUT_FOLDER, filename]), mode="w") as out:
             out.write(html.render(doctype=True, pretty=True))
-    
-    # res = analyzer.parse("".join(dictionary), traditional=True)
             
 if __name__ == "__main__":
     main()

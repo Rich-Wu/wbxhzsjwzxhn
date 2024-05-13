@@ -8,7 +8,6 @@ pypinyin = "*"
 beautifulsoup4 = "*"
 htmlbuilder = "*"
 requests = "*"
-chinese = "*"
 jieba = "*"
 pynlpir = "*"
 
