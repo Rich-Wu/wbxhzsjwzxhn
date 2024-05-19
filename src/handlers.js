@@ -22,6 +22,5 @@ document.querySelectorAll(".word").forEach(word => {
         word.addEventListener("mouseleave", toggleDetails);
     } else {
         word.addEventListener("touchstart", toggleDetails);
-        word.addEventListener("touchend", toggleDetails);
     }
 })
